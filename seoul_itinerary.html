@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match Day · Seoul</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Syne+Mono&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#040d1a;
+  --mid:#071e38;
+  --surface:#0a2a4a;
+  --glass:#0d3560;
+  --teal:#00c2b8;
+  --cyan:#38e8ff;
+  --glow:#00a8ff;
+  --foam:#b8f0ff;
+  --dim:#4a7fa0;
+  --line:rgba(0,194,184,0.18);
+  --text:#d4f0ff;
+  --muted:#5b99b8;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--deep);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  overflow-x:hidden;
+  cursor:none;
+  min-height:100vh;
+}
+
+/* ── BUBBLES BG ── */
+.bubbles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.bubble{
+  position:absolute;bottom:-60px;border-radius:50%;
+  border:1px solid rgba(0,194,184,0.25);
+  animation:rise linear infinite;
+}
+@keyframes rise{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  10%{opacity:1}
+  90%{opacity:0.3}
+  100%{transform:translateY(-110vh) translateX(30px);opacity:0}
+}
+
+/* ── CURSOR ── */
+#cursor{
+  position:fixed;width:10px;height:10px;border-radius:50%;
+  background:var(--teal);pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 12px var(--teal),0 0 24px rgba(0,194,184,0.4);
+  transition:width 0.2s,height 0.2s;
+}
+#cursor.big{
+  width:36px;height:36px;background:transparent;
+  border:1px solid var(--teal);
+  box-shadow:0 0 20px rgba(0,194,184,0.3);
+}
+
+/* ── TICKER ── */
+.ticker{
+  background:rgba(0,194,184,0.08);
+  border-bottom:1px solid var(--line);
+  color:var(--teal);
+  font-family:'Syne Mono',monospace;font-size:10px;letter-spacing:0.16em;
+  padding:9px 0;overflow:hidden;white-space:nowrap;position:relative;z-index:2;
+}
+.ticker-inner{display:inline-block;animation:tick 20s linear infinite;}
+.ticker-inner span{padding:0 48px;color:var(--muted);}
+.ticker-inner span b{color:var(--teal);}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── HEADER ── */
+header{
+  padding:72px 64px 60px;
+  border-bottom:1px solid var(--line);
+  position:relative;z-index:2;
+}
+.header-grid{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:end;}
+.header-eyebrow{
+  font-family:'Syne Mono',monospace;font-size:10px;
+  letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;
+  margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;
+}
+.eyebrow-dot{color:var(--teal);}
+h1{
+  font-family:'Instrument Serif',serif;font-style:italic;
+  font-size:clamp(64px,10vw,112px);line-height:0.88;
+  font-weight:400;letter-spacing:-0.03em;
+  color:#fff;
+  text-shadow:0 0 60px rgba(0,168,255,0.25);
+}
+.h1-line2{font-style:normal;color:var(--teal);}
+
+/* ── SCORE BOX ── */
+.score-box{
+  background:var(--glass);
+  border:1px solid var(--line);
+  border-radius:8px;padding:20px 24px;
+  text-align:center;min-width:140px;flex-shrink:0;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(8px);
+}
+.score-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+}
+.score-live{
+  font-family:'Syne Mono',monospace;font-size:8px;letter-spacing:0.15em;
+  color:var(--teal);animation:blink 1.2s step-end infinite;
+  margin-bottom:8px;display:block;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.score-teams{font-family:'Syne Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--muted);margin-bottom:8px;}
+.score-nums{
+  font-family:'Instrument Serif',serif;font-size:48px;
+  font-weight:400;letter-spacing:-0.02em;line-height:1;color:#fff;
+}
+.score-sep{color:var(--dim);margin:0 6px;}
+.score-time{font-family:'Syne Mono',monospace;font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:0.1em;}
+
+/* ── PROGRESS ── */
+.day-progress{
+  padding:20px 64px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:20px;position:relative;z-index:2;
+}
+.progress-label{font-family:'Syne Mono',monospace;font-size:10px;letter-spacing:0.12em;color:var(--muted);white-space:nowrap;}
+.progress-track{flex:1;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;position:relative;}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--teal),var(--cyan));
+  border-radius:2px;width:0%;
+  transition:width 1.4s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 0 8px rgba(0,194,184,0.6);
+}
+.progress-steps{display:flex;justify-content:space-between;margin-top:7px;}
+.pdot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1);
+  cursor:pointer;transition:all 0.2s;position:relative;
+}
+.pdot.done{background:var(--teal);border-color:var(--teal);box-shadow:0 0 6px rgba(0,194,184,0.6);}
+.pdot:hover{transform:scale(1.5);}
+.pdot .tip{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  background:var(--glass);border:1px solid var(--line);color:var(--text);
+  font-family:'Syne Mono',monospace;font-size:9px;letter-spacing:0.1em;
+  padding:3px 8px;border-radius:3px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity 0.15s;
+}
+.pdot:hover .tip{opacity:1;}
+
+/* ── MAIN ── */
+main{max-width:900px;margin:0 auto;padding:0 64px 80px;position:relative;z-index:2;}
+
+/* ── STOP ── */
+.stop{
+  display:grid;grid-template-columns:72px 1fr;
+  border-bottom:1px solid var(--line);
+  opacity:0;transform:translateY(24px);
+  transition:opacity 0.6s ease,transform 0.6s ease,background 0.3s;
+  border-radius:4px;
+}
+.stop.visible{opacity:1;transform:translateY(0);}
+.stop:hover{background:rgba(0,194,184,0.04);}
+.stop:hover .stop-title{color:var(--cyan);}
+.stop:hover .stop-dot{transform:scale(1.7);box-shadow:0 0 12px var(--teal);}
+
+.stop-left{display:flex;flex-direction:column;align-items:center;padding:44px 0;gap:8px;}
+.stop-num{font-family:'Syne Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:0.1em;}
+.stop-dot{
+  width:9px;height:9px;border-radius:50%;background:var(--teal);
+  transition:transform 0.25s,box-shadow 0.25s;flex-shrink:0;
+  box-shadow:0 0 6px rgba(0,194,184,0.5);
+}
+.stop-line{width:1px;flex:1;background:var(--line);min-height:20px;}
+
+.stop-right{padding:44px 0;}
+.stop-top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:10px;flex-wrap:wrap;}
+.stop-title{
+  font-family:'Instrument Serif',serif;font-size:30px;
+  font-weight:400;letter-spacing:-0.01em;line-height:1;
+  color:#fff;transition:color 0.2s;
+}
+.stop-time{
+  font-family:'Syne Mono',monospace;font-size:10px;
+  letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;white-space:nowrap;
+}
+.stop-desc{font-size:14px;line-height:1.8;color:var(--muted);max-width:520px;margin-bottom:16px;}
+.stop-tags{display:flex;gap:7px;flex-wrap:wrap;}
+.tag{
+  font-family:'Syne Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:4px 10px;border-radius:3px;
+  border:1px solid var(--line);color:var(--dim);
+  transition:all 0.2s;
+}
+.tag.accent{
+  background:rgba(0,194,184,0.12);color:var(--teal);
+  border-color:rgba(0,194,184,0.35);
+}
+.stop:hover .tag{border-color:rgba(0,194,184,0.3);color:var(--teal);}
+
+/* ── MATCH CARD ── */
+.match-card{
+  background:var(--mid);border:1px solid var(--line);border-radius:8px;
+  padding:20px 24px;margin:18px 0 0;
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:16px;max-width:440px;
+  position:relative;overflow:hidden;
+}
+.match-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+}
+.match-team{text-align:center;}
+.match-flag{font-size:26px;display:block;margin-bottom:4px;}
+.match-name{font-family:'Syne Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--muted);}
+.match-vs{font-family:'Instrument Serif',serif;font-size:20px;font-style:italic;color:var(--dim);}
+.match-kickoff{
+  position:absolute;bottom:7px;left:50%;transform:translateX(-50%);
+  font-family:'Syne Mono',monospace;font-size:8px;letter-spacing:0.15em;
+  color:var(--teal);animation:blink 1.2s step-end infinite;
+}
+
+/* ── AQUARIUM VISUAL ── */
+.aqua-tank{
+  max-width:480px;height:72px;margin:18px 0 0;
+  background:var(--mid);border:1px solid var(--line);border-radius:8px;
+  position:relative;overflow:hidden;
+}
+.aqua-tank::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,194,184,0.07) 0%,rgba(0,40,80,0.6) 100%);
+}
+.fish{
+  position:absolute;font-size:16px;
+  animation:swim linear infinite;
+}
+.fish:nth-child(1){top:20%;animation-duration:8s;animation-delay:0s;}
+.fish:nth-child(2){top:55%;animation-duration:11s;animation-delay:-3s;font-size:12px;}
+.fish:nth-child(3){top:35%;animation-duration:7s;animation-delay:-5s;font-size:20px;}
+.fish:nth-child(4){top:70%;animation-duration:13s;animation-delay:-2s;font-size:10px;}
+.wave-line{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--teal),var(--cyan),var(--teal));
+  background-size:200%;animation:wave 2s linear infinite;
+  opacity:0.6;
+}
+@keyframes swim{
+  from{transform:translateX(-60px);}
+  to{transform:translateX(540px);}
+}
+@keyframes wave{from{background-position:0%}to{background-position:200%}}
+.aqua-label{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Syne Mono',monospace;font-size:9px;letter-spacing:0.18em;
+  color:rgba(0,194,184,0.5);text-transform:uppercase;pointer-events:none;
+}
+
+/* ── COFFEE ORDER ── */
+.coffee-order{
+  background:var(--mid);border:1px solid var(--line);border-radius:6px;
+  padding:14px 18px;margin-top:16px;max-width:360px;
+  display:flex;align-items:center;gap:14px;
+}
+.coffee-icon{font-size:26px;}
+.coffee-detail{flex:1;}
+.coffee-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;}
+.coffee-spec{font-family:'Syne Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.08em;}
+.coffee-shots{
+  font-family:'Syne Mono',monospace;font-size:9px;
+  background:rgba(0,194,184,0.15);color:var(--teal);
+  border:1px solid rgba(0,194,184,0.3);
+  padding:3px 9px;border-radius:3px;letter-spacing:0.1em;white-space:nowrap;
+}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--line);padding:36px 64px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+  position:relative;z-index:2;
+}
+.footer-sig{font-family:'Syne Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.12em;}
+.footer-nav{display:flex;gap:4px;align-items:center;}
+.fnav-item{
+  font-family:'Syne Mono',monospace;font-size:9px;color:var(--muted);
+  letter-spacing:0.1em;padding:4px 10px;border-radius:3px;cursor:pointer;
+  border:1px solid transparent;
+  transition:all 0.15s;
+}
+.fnav-item:hover,.fnav-item.active{
+  background:rgba(0,194,184,0.1);color:var(--teal);
+  border-color:rgba(0,194,184,0.3);
+}
+
+/* ── SCROLL HINT ── */
+.scroll-hint{
+  position:fixed;bottom:32px;right:40px;
+  font-family:'Syne Mono',monospace;font-size:9px;letter-spacing:0.14em;
+  color:var(--muted);text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  opacity:1;transition:opacity 0.4s;pointer-events:none;z-index:10;
+}
+.scroll-hint.hidden{opacity:0;}
+.scroll-arrow{width:1px;height:28px;background:var(--line);position:relative;overflow:hidden;}
+.scroll-arrow::after{
+  content:'';position:absolute;top:-100%;left:0;
+  width:1px;height:100%;background:var(--teal);
+  animation:scrolldown 1.6s ease infinite;
+}
+@keyframes scrolldown{to{top:200%;}}
+
+@media(max-width:640px){
+  header,main,footer,.day-progress{padding-left:24px;padding-right:24px;}
+  .stop{grid-template-columns:44px 1fr;}
+  h1{font-size:clamp(48px,14vw,80px);}
+  .header-grid{grid-template-columns:1fr;}
+  .score-box{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- BUBBLES -->
+<div class="bubbles" id="bubbles"></div>
+
+<div id="cursor"></div>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span><b>MATCH DAY</b> · SEOUL 2026</span>
+    <span>MEXICO 🇲🇽 VS AUSTRALIA 🇦🇺</span>
+    <span><b>KICK-OFF</b> 11:00 AM</span>
+    <span>COEX AQUARIUM · GANGNAM · B1</span>
+    <span><b>TIM HORTONS</b> · BLACK ICED AMERICANO · 2 SHOTS</span>
+    <span><b>MATCH DAY</b> · SEOUL 2026</span>
+    <span>MEXICO 🇲🇽 VS AUSTRALIA 🇦🇺</span>
+    <span><b>KICK-OFF</b> 11:00 AM</span>
+    <span>COEX AQUARIUM · GANGNAM · B1</span>
+    <span><b>TIM HORTONS</b> · BLACK ICED AMERICANO · 2 SHOTS</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-grid">
+    <div>
+      <div class="header-eyebrow">
+        <span>Seoul, KR</span>
+        <span class="eyebrow-dot">·</span>
+        <span>Gangnam</span>
+        <span class="eyebrow-dot">·</span>
+        <span>Game Day</span>
+      </div>
+      <h1>Match<br><span class="h1-line2">Day</span></h1>
+    </div>
+    <div class="score-box">
+      <span class="score-live">● LIVE</span>
+      <div class="score-teams">MEX &nbsp;·&nbsp; AUS</div>
+      <div class="score-nums">
+        <span id="score-mex">—</span>
+        <span class="score-sep">:</span>
+        <span id="score-aus">—</span>
+      </div>
+      <div class="score-time" id="match-time">Kick-off 11:00</div>
+    </div>
+  </div>
+</header>
+
+<!-- PROGRESS -->
+<div class="day-progress">
+  <span class="progress-label">Day progress</span>
+  <div style="flex:1">
+    <div class="progress-track">
+      <div class="progress-fill" id="prog-fill"></div>
+    </div>
+    <div class="progress-steps">
+      <div class="pdot done" data-n="1"><span class="tip">Breakfast</span></div>
+      <div class="pdot done" data-n="2"><span class="tip">Match</span></div>
+      <div class="pdot done" data-n="3"><span class="tip">Aquarium</span></div>
+      <div class="pdot" data-n="4"><span class="tip">Tim Hortons</span></div>
+      <div class="pdot" data-n="5"><span class="tip">Walk</span></div>
+    </div>
+  </div>
+  <span class="progress-label" id="prog-pct">60%</span>
+</div>
+
+<!-- STOPS -->
+<main>
+
+  <div class="stop" id="s1">
+    <div class="stop-left">
+      <span class="stop-num">01</span>
+      <div class="stop-dot"></div>
+      <div class="stop-line"></div>
+    </div>
+    <div class="stop-right">
+      <div class="stop-top">
+        <h2 class="stop-title">Breakfast pickup</h2>
+        <span class="stop-time">Morning</span>
+      </div>
+      <p class="stop-desc">Grab something to go before the match.</p>
+      <div class="stop-tags">
+        <span class="tag accent">Takeaway</span>
+        <span class="tag">GS25 / CU</span>
+        <span class="tag">Bakery</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stop" id="s2">
+    <div class="stop-left">
+      <span class="stop-num">02</span>
+      <div class="stop-dot"></div>
+      <div class="stop-line"></div>
+    </div>
+    <div class="stop-right">
+      <div class="stop-top">
+        <h2 class="stop-title">Mexico vs Australia</h2>
+        <span class="stop-time">11:00 am</span>
+      </div>
+      <p class="stop-desc">Watch the match while eating the breakfast you picked up. Kick-off at 11 am sharp. Find a comfortable spot with a screen and enjoy the game.</p>
+      <div class="match-card">
+        <div class="match-team">
+          <span class="match-flag">🇲🇽</span>
+          <span class="match-name">Mexico</span>
+        </div>
+        <span class="match-vs">vs</span>
+        <div class="match-team">
+          <span class="match-flag">🇦🇺</span>
+          <span class="match-name">Australia</span>
+        </div>
+        <span class="match-kickoff">Kick-off 11:00 am</span>
+      </div>
+      <div class="stop-tags" style="margin-top:16px">
+        <span class="tag accent">11:00 am</span>
+        <span class="tag">Big screen</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stop" id="s3">
+    <div class="stop-left">
+      <span class="stop-num">03</span>
+      <div class="stop-dot"></div>
+      <div class="stop-line"></div>
+    </div>
+    <div class="stop-right">
+      <div class="stop-top">
+        <h2 class="stop-title">COEX Aquarium</h2>
+        <span class="stop-time">Post-match</span>
+      </div>
+      <p class="stop-desc">Inside COEX Mall in Gangnam, B1 level. Sharks, jellyfish, rays, otters, and a full underwater tunnel. One of the largest aquariums in Korea. Book tickets online to skip the queue.</p>
+      <div class="aqua-tank">
+        <span class="fish">🐠</span>
+        <span class="fish">🐟</span>
+        <span class="fish">🦈</span>
+        <span class="fish">🐡</span>
+        <div class="wave-line"></div>
+        <span class="aqua-label">COEX Aquarium · Gangnam B1</span>
+      </div>
+      <div class="stop-tags" style="margin-top:14px">
+        <span class="tag accent">Gangnam · B1</span>
+        <span class="tag">Underwater tunnel</span>
+        <span class="tag">Book online</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stop" id="s4">
+    <div class="stop-left">
+      <span class="stop-num">04</span>
+      <div class="stop-dot"></div>
+      <div class="stop-line"></div>
+    </div>
+    <div class="stop-right">
+      <div class="stop-top">
+        <h2 class="stop-title">Tim Hortons</h2>
+        <span class="stop-time">Afternoon</span>
+      </div>
+      <p class="stop-desc">Near the COEX station exit. Simple, no fuss — exactly what you need before the walk.</p>
+      <div class="coffee-order">
+        <span class="coffee-icon">☕</span>
+        <div class="coffee-detail">
+          <div class="coffee-name">Black Iced Americano</div>
+          <div class="coffee-spec">Tim Hortons · COEX exit</div>
+        </div>
+        <span class="coffee-shots">2 shots</span>
+      </div>
+      <div class="stop-tags" style="margin-top:14px">
+        <span class="tag accent">COEX exit</span>
+        <span class="tag">Iced · Black</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stop" id="s5" style="border-bottom:none">
+    <div class="stop-left">
+      <span class="stop-num">05</span>
+      <div class="stop-dot"></div>
+    </div>
+    <div class="stop-right">
+      <div class="stop-top">
+        <h2 class="stop-title">Gangnam streets</h2>
+        <span class="stop-time">Evening</span>
+      </div>
+      <p class="stop-desc">Walk around Gangnam with your coffee in hand. Window shop along the main strip or cut through the side streets. No agenda — just a good way to wind down the day.</p>
+      <div class="stop-tags">
+        <span class="tag accent">Window shopping</span>
+        <span class="tag">Gangnam strip</span>
+        <span class="tag">Side streets</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-sig">Seoul · Match Day · 2026</span>
+  <nav class="footer-nav">
+    <div class="fnav-item active" onclick="scrollTo({top:0,behavior:'smooth'})">Top</div>
+    <div class="fnav-item" onclick="document.getElementById('s1').scrollIntoView({behavior:'smooth'})">01</div>
+    <div class="fnav-item" onclick="document.getElementById('s2').scrollIntoView({behavior:'smooth'})">02</div>
+    <div class="fnav-item" onclick="document.getElementById('s3').scrollIntoView({behavior:'smooth'})">03</div>
+    <div class="fnav-item" onclick="document.getElementById('s4').scrollIntoView({behavior:'smooth'})">04</div>
+    <div class="fnav-item" onclick="document.getElementById('s5').scrollIntoView({behavior:'smooth'})">05</div>
+  </nav>
+</footer>
+
+<div class="scroll-hint" id="scroll-hint">
+  <span>Scroll</span>
+  <div class="scroll-arrow"></div>
+</div>
+
+<script>
+// Bubbles
+const bc = document.getElementById('bubbles');
+for(let i=0;i<18;i++){
+  const b = document.createElement('div');
+  b.className='bubble';
+  const s = 6+Math.random()*28;
+  b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${10+Math.random()*18}s;animation-delay:${-Math.random()*18}s;opacity:${0.1+Math.random()*0.2}`;
+  bc.appendChild(b);
+}
+
+// Cursor
+const cur = document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{
+  cur.style.left=e.clientX+'px';
+  cur.style.top=e.clientY+'px';
+});
+document.querySelectorAll('.stop,.fnav-item,.pdot,.tag').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.classList.add('big'));
+  el.addEventListener('mouseleave',()=>cur.classList.remove('big'));
+});
+
+// Scroll reveal
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:0.1});
+document.querySelectorAll('.stop').forEach(s=>obs.observe(s));
+
+// Scroll hint
+window.addEventListener('scroll',()=>{
+  document.getElementById('scroll-hint').classList.toggle('hidden',window.scrollY>80);
+});
+
+// Progress
+window.addEventListener('load',()=>{
+  setTimeout(()=>{document.getElementById('prog-fill').style.width='60%';},500);
+});
+
+// Match clock
+let min=0;
+const mt=document.getElementById('match-time');
+setTimeout(()=>{setInterval(()=>{if(min<90){min++;mt.textContent=min+"'";}},3000);},1000);
+</script>
+</body>
+</html>
